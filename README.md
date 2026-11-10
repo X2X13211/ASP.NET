@@ -1,69 +1,53 @@
 ```mermaid
-graph TD
-    subgraph IDE ["Properties - Локальный запуск"]
-        LS["launchSettings.json<br>- Профили: Kestrel, IIS Express<br>- applicationUrl: ports<br>- ASPNETCORE_ENVIRONMENT"]
-    end
+graph LR
+    ROOT["ASP.NET Core MVC"]
 
-    subgraph AppRoot ["Точка входа: Program.cs"]
-        DI["builder.Services - DI-контейнер<br>- AddControllersWithViews<br>- AddDbContext<br>- AddScoped / Transient / Singleton"]
-        MW["Middleware Pipeline - app.Use...<br>1. UseExceptionHandler<br>2. UseHttpsRedirection<br>3. UseStaticFiles<br>4. UseRouting<br>5. UseAuthorization<br>6. MapControllerRoute"]
-        DI --> MW
-    end
+    %% 1. Program.cs
+    ROOT --> PROG["Program.cs"]
+    PROG --> PROG_N["Назначение:<br>Точка входа в приложение Main.<br>В современных версиях .NET использует Top-Level Statements.<br>Отвечает за инициализацию WebApplicationBuilder,<br>регистрацию сервисов в DI-контейнере и настройку<br>конвейера обработки HTTP-запросов Middleware Pipeline."]
+    PROG --> PROG_Z["Что записывается?"]
+    PROG_Z --> PROG_DI["DI-контейнер builder.Services:<br>регистрация MVC AddControllersWithViews,<br>контекста базы данных AddDbContext,<br>аутентификации, авторизации, фоновых служб<br>и пользовательских сервисов AddScoped, AddTransient, AddSingleton."]
+    PROG_Z --> PROG_MW["Middleware app.Use...:<br>порядок перехвата запросов —<br>обработка ошибок UseExceptionHandler,<br>HTTPS-редирект UseHttpsRedirection,<br>статические файлы UseStaticFiles,<br>маршрутизация UseRouting,<br>авторизация UseAuthorization,<br>маршруты контроллеров MapControllerRoute."]
 
-    subgraph Static ["wwwroot - Статические файлы"]
-        WWW["- css/site.css: глобальные стили<br>- js/site.js: клиентские скрипты<br>- lib/: Bootstrap, jQuery<br>- images/, favicon.ico"]
-    end
+    %% 2. Properties
+    ROOT --> PROP["Properties"]
+    PROP --> LS["launchSettings.json"]
+    LS --> LS_N["Назначение:<br>Конфигурация локального запуска приложения для IDE<br>Visual Studio, Rider, VS Code и утилиты dotnet run.<br>Не публикуется на прод-сервер игнорируется при dotnet publish."]
+    LS --> LS_Z["Что записывается?"]
+    LS_Z --> LS_Z1["Профили запуска Kestrel, IIS Express."]
+    LS_Z --> LS_Z2["URL и порты локального биндинга<br>applicationUrl: https://localhost:7045;http://localhost:5045"]
+    LS_Z --> LS_Z3["Локальные переменные окружения<br>ASPNETCORE_ENVIRONMENT: Development"]
 
-    subgraph MVC ["Паттерн ASP.NET Core MVC"]
-        subgraph C ["Controllers - Обработка запросов"]
-            CTRL["Controller.cs<br>- Внедрение зависимостей DI<br>- Action-методы: HttpGet, HttpPost, Route<br>- Возврат IActionResult: View, Json, NotFound"]
-        end
+    %% 3. wwwroot
+    ROOT --> WWW["wwwroot"]
+    WWW --> WWW_N["Назначение:<br>Единственный каталог, файлы из которого отдаются<br>веб-сервером клиенту напрямую без прохождения<br>через MVC-контроллеры при активном app.UseStaticFiles."]
+    WWW --> WWW_S["Содержимое"]
+    WWW_S --> WWW_CSS["css/site.css<br>глобальные каскадные таблицы стилей."]
+    WWW_S --> WWW_JS["js/site.js<br>клиентские скрипты приложения."]
+    WWW_S --> WWW_LIB["lib/<br>клиентские библиотеки и зависимости<br>Bootstrap, jQuery, валидаторы,<br>подгружаемые через LibMan или вручную."]
+    WWW_S --> WWW_IMG["images/, favicon.ico<br>статические изображения, иконки, шрифты."]
 
-        subgraph M ["Models - Структуры данных POCO"]
-            DOM["Domain Models / Entities<br>Сущности EF Core: Key, Required"]
-            VM["ViewModels / DTO<br>Данные для View и форм: EmailAddress, Compare"]
-            ERRM["ErrorViewModel.cs<br>RequestId, ShowRequestId"]
-        end
+    %% 4. Controllers
+    ROOT --> CTRL["Controllers"]
+    CTRL --> CTRL_N["Назначение:<br>C#-классы, наследующие Microsoft.AspNetCore.Mvc.Controller.<br>Выступают связующим звеном между моделью и представлением:<br>принимают входящие HTTP-запросы, дергают сервисы бизнес-логики<br>и возвращают результат View, JSON, Redirect, File."]
+    CTRL --> CTRL_Z["Что записывается?"]
+    CTRL_Z --> CTRL_Z1["Внедрение зависимостей через конструктор<br>логгеры, контексты БД, интерфейсы сервисов."]
+    CTRL_Z --> CTRL_Z2["Action-методы действия, аннотированные<br>HTTP-глаголами HttpGet, HttpPost<br>или атрибутами маршрутизации Route."]
+    CTRL_Z --> CTRL_Z3["Возврат объектов IActionResult:<br>return View model; return NotFound; return Json data;"]
 
-        subgraph V ["Views - Представления .cshtml"]
-            VI["_ViewImports.cshtml<br>Глобальные using и addTagHelper"]
-            VS["_ViewStart.cshtml<br>Задает макет Layout = _Layout"]
-            LAY["Shared/_Layout.cshtml<br>Каркас: RenderBody, RenderSectionAsync"]
-            VAL["Shared/_ValidationScriptsPartial.cshtml<br>jQuery Validation для форм"]
-            ERRV["Shared/Error.cshtml<br>Страница 500-й ошибки"]
-            PAGE["Home/Index.cshtml и Privacy.cshtml<br>Директива model MyViewModel<br>HTML + Razor: if, foreach, asp-for"]
-        end
-    end
+    %% 5. Models
+    ROOT --> MOD["Models<br>C#-классы POCO, определяющие структуры данных."]
+    MOD --> MOD_Z["Что записывается?"]
+    MOD_Z --> MOD_Z1["Domain Models / Entities:<br>сущности БД для ORM EF Core<br>с аннотациями данных Key, Required, MaxLength."]
+    MOD_Z --> MOD_Z2["ViewModels / DTO:<br>модели для передачи строго типизированных данных во View<br>или приёма из HTML-форм, валидационные атрибуты EmailAddress, Compare."]
+    MOD_Z --> MOD_Z3["ErrorViewModel.cs:<br>хранит свойства RequestId и ShowRequestId<br>для отображения диагностических сведений при падении приложения."]
 
-    LS -.->|"Конфигурация запуска"| DI
-    MW -->|"UseStaticFiles"| WWW
-    MW -->|"MapControllerRoute"| CTRL
-    MW -.->|"UseExceptionHandler"| ERRV
-
-    CTRL <-->|"Чтение и запись"| DOM
-    CTRL -->|"Заполняет"| VM
-    CTRL -->|"return View"| PAGE
-
-    VM -.->|"Строгая типизация"| PAGE
-    ERRM -.->|"Передача RequestId"| ERRV
-
-    VI -.->|"Глобальные импорты"| PAGE
-    VS -.->|"Задает шаблон"| LAY
-    PAGE -->|"Внедряется в RenderBody"| LAY
-    VAL -.->|"Секция Scripts"| PAGE
-    LAY -.->|"Ссылки на CSS и JS"| WWW
-
-    classDef config fill:#1e293b,stroke:#64748b,stroke-width:2px,color:#f8fafc;
-    classDef entry fill:#3b0764,stroke:#a855f7,stroke-width:2px,color:#faf5ff;
-    classDef static fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ecfdf5;
-    classDef controller fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#eff6ff;
-    classDef model fill:#7c2d12,stroke:#f97316,stroke-width:2px,color:#fff7ed;
-    classDef view fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fdf2f8;
-
-    class LS config;
-    class DI,MW entry;
-    class WWW static;
-    class CTRL controller;
-    class DOM,VM,ERRM model;
-    class VI,VS,LAY,VAL,ERRV,PAGE view;
+    %% 6. Views
+    ROOT --> VIEWS["Views<br>Файлы представлений имеют расширение .cshtml<br>HTML с синтаксисом C# Razor.<br>Структурированы по именам соответствующих контроллеров."]
+    VIEWS --> VS["Назначение _ViewStart.cshtml:<br>Выполняется перед рендером любого View в иерархии папок.<br>Что записывается?: Задание мастер-шаблона по умолчанию:<br>Layout = _Layout"]
+    VIEWS --> V_LAY["Views/Shared/_Layout.cshtml<br>Главный мастер-макет каркас страниц сайта.<br>Содержит общую HTML-структуру: DOCTYPE html, head,<br>общие теги meta, подключение шрифтов, CSS, шапку и футер.<br>Что записывается?:<br>- Директива RenderBody<br>- await RenderSectionAsync Scripts, required: false"]
+    VIEWS --> V_IMP["Views/_ViewImports.cshtml<br>Глобальный импорт пространств имен, Tag Helpers и директив.<br>Что записывается?:<br>- using MyMvcApp<br>- using MyMvcApp.Models<br>- addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers"]
+    VIEWS --> V_VAL["Views/Shared/_ValidationScriptsPartial.cshtml<br>Частичное представление Partial View для подключения<br>клиентских скриптов валидации jQuery Validation, Unobtrusive Validation.<br>Что записывается?:<br>- Теги script со ссылками на библиотеки валидации,<br>подключаемые через section Scripts"]
+    VIEWS --> V_ERR["Views/Shared/Error.cshtml<br>Страница отображения непредвиденных исключений и системных ошибок,<br>перехваченных middleware UseExceptionHandler.<br>Что записывается?:<br>- Разметка страницы 500-й ошибки с выводом Model.RequestId"]
+    VIEWS --> V_HOME["Views/Home/Index.cshtml, Privacy.cshtml<br>Конкретные конечные представления, привязанные к действиям<br>Index и Privacy контроллера HomeController.<br>Что записывается?:<br>- Директива модели model MyViewModel<br>- ViewData Title = Home Page<br>- Чистый HTML, смешанный с Razor-конструкциями if, foreach, asp-for, asp-route-id"]
 ```
